@@ -8,29 +8,41 @@ pipeline {
         stage('Download Maven') {
             steps {
                 script {
-                    // Ensure the maven_version parameter is not empty
-                    if (!params.maven_version) {
-                        error "Maven version parameter is missing!"
-                    }
+                    // Construct the URL for Maven
+                    def mavenUrl = "https://dlcdn.apache.org/maven/maven-3/${maven_version}/binaries/apache-maven-${maven_version}-bin.tar.gz"
+                    
+                    // Validate Maven URL before downloading
+                    sh """
+                    cd /var/lib/jenkins/
+                    if curl --head --silent --fail ${mavenUrl} > /dev/null; then
+                        echo "Downloading Maven version ${maven_version}"
+                        sudo wget ${mavenUrl}
+                    else
+                        echo "Error: Maven version ${maven_version} not found!"
+                        exit 1
+                    fi
+                    """
                 }
-                sh '''
-                cd /var/lib/jenkins/
-                sudo wget https://dlcdn.apache.org/maven/maven-3/${maven_version}/binaries/apache-maven-${maven_version}-bin.tar.gz
-                '''
             }
         }
         stage('Download Terraform') {
             steps {
                 script {
-                    // Ensure the terraform_version parameter is not empty
-                    if (!params.terraform_version) {
-                        error "Terraform version parameter is missing!"
-                    }
+                    // Construct the URL for Terraform
+                    def terraformUrl = "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip"
+
+                    // Validate Terraform URL before downloading
+                    sh """
+                    cd /opt
+                    if curl --head --silent --fail ${terraformUrl} > /dev/null; then
+                        echo "Downloading Terraform version ${terraform_version}"
+                        sudo wget ${terraformUrl}
+                    else
+                        echo "Error: Terraform version ${terraform_version} not found!"
+                        exit 1
+                    fi
+                    """
                 }
-                sh '''
-                cd /opt
-                sudo wget https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip
-                '''
             }
         }
     }
